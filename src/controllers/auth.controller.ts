@@ -3,6 +3,7 @@ import { hashPassword } from "../utils/hashPassword";
 import { regisSchema } from "../config/validationSchema/auth.schema";
 import { prisma } from "../config/prisma";
 import { transport } from "../config/nodemailer";
+import { regisTemplate } from "../templates/regis.template";
 
 class AuthController {
   public register = async (req: Request, res: Response, next: NextFunction) => {
@@ -37,7 +38,7 @@ class AuthController {
         from: process.env.MAIL_SENDER,
         to: newAccount.email,
         subject: "Registration info",
-        html: `<h1>Welcome, ${newAccount.username}</h1>`,
+        html: regisTemplate(newAccount.username),
       });
 
       res.status(200).send({
