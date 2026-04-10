@@ -1,12 +1,22 @@
 import { NextFunction, Request, Response } from "express";
-import prisma from "../prisma";
-import { regisTemplate } from "../templates/regis.template";
 import { hashPassword } from "../utils/hashPassword";
+import { regisSchema } from "../config/validationSchema/auth.schema";
+import { prisma } from "../config/prisma";
+import { transport } from "../config/nodemailer";
 
 class AuthController {
   public register = async (req: Request, res: Response, next: NextFunction) => {
     try {
       // code
+
+      // validate req.body
+      const validation = regisSchema.safeParse(req.body);
+      console.log("LOG REGIS VALIDATION===>", validation);
+
+      if (!validation.success) {
+        return res.status(400).send(validation.error);
+      }
+
       // #check existing account
       const checkAccount = await prisma.accounts.findUnique({
         where: {
@@ -18,8 +28,16 @@ class AuthController {
         throw { code: 400, message: "Account exist" };
       }
 
-      const newwAccount = await prisma.accounts.create({
+      const newAccount = await prisma.accounts.create({
         data: { ...req.body, password: await hashPassword(req.body.password) },
+      });
+
+      // send email
+      await transport.sendMail({
+        from: process.env.MAIL_SENDER,
+        to: newAccount.email,
+        subject: "Registration info",
+        html: `<h1>Welcome, ${newAccount.username}</h1>`,
       });
 
       res.status(200).send({
