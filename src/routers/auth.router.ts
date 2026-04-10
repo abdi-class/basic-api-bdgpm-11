@@ -1,6 +1,8 @@
 import { Router } from "express";
 import AuthController from "../controllers/auth.controller";
+import multer from "multer";
 
+const upload = multer({ dest: "uploads/" });
 class AuthRouter {
   private route: Router;
   private authController: AuthController;
@@ -12,7 +14,11 @@ class AuthRouter {
   }
 
   private initializeRoutes = () => {
-    this.route.post("/regis", this.authController.register);
+    this.route.post(
+      "/regis",
+      upload.single("file"),
+      this.authController.register,
+    );
   };
 
   public getRouter = (): Router => {

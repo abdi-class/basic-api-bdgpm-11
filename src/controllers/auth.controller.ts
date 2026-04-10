@@ -4,6 +4,7 @@ import { regisSchema } from "../config/validationSchema/auth.schema";
 import { prisma } from "../config/prisma";
 import { transport } from "../config/nodemailer";
 import { regisTemplate } from "../templates/regis.template";
+import { uploadImage } from "../config/cloudinaryUpload";
 
 class AuthController {
   public register = async (req: Request, res: Response, next: NextFunction) => {
@@ -29,8 +30,15 @@ class AuthController {
         throw { code: 400, message: "Account exist" };
       }
 
+      // upload image
+      const imgUrl = await uploadImage(req.file?.path as string);
+
       const newAccount = await prisma.accounts.create({
-        data: { ...req.body, password: await hashPassword(req.body.password) },
+        data: {
+          ...req.body,
+          password: await hashPassword(req.body.password),
+          img: imgUrl,
+        },
       });
 
       // send email
